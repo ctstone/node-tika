@@ -40,6 +40,10 @@ exports.text = function(uri, options, cb) {
 		options = null;
 	}
 
+  if (Buffer.isBuffer(uri)) {
+    uri = bufferToJavaBytes(uri);
+  }
+
 	NodeTika.extractText(uri, JSON.stringify(options), cb);
 };
 
@@ -104,3 +108,11 @@ exports.language = function(text, cb) {
 		}
 	});
 };
+
+function bufferToJavaBytes(buf) {
+  var array = [], i;
+  for (i = 0; i < buf.length; i++) {
+    array[i] = buf[i];
+  }
+  return java.newArray('byte', array);
+}

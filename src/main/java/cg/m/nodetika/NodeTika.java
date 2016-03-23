@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.FileInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.OutputStreamWriter;
 
 import java.net.URL;
@@ -79,6 +80,10 @@ public class NodeTika {
 		}
 
 		return TikaInputStream.get(inputStream);
+	}
+	
+	private static TikaInputStream createInputStream(byte[] buffer, Metadata metadata) {
+		return TikaInputStream.get(new ByteArrayInputStream(buffer));
 	}
 
 	private static AutoDetectParser createParser() {
@@ -313,10 +318,27 @@ public class NodeTika {
 
 		return extractText(uri, options);
 	}
-
-	public static String extractText(String uri, Map<String, Object> options) throws Exception {
-		final AutoDetectParser parser = createParser();
+	
+	public static String extractText(byte[] buffer, String optionsJson) throws Exception {
+		Map<String, Object> options = null;
 		final Metadata metadata = new Metadata();
+		final TikaInputStream inputStream = createInputStream(buffer, metadata);
+
+		if (optionsJson != null) {
+			options = new Gson().fromJson(optionsJson, HashMap.class);
+		}
+
+		return extractText(inputStream, metadata, null, options);
+	}
+	
+	public static String extractText(String uri, Map<String, Object> options) throws Exception {
+		final Metadata metadata = new Metadata();
+		final TikaInputStream inputStream = createInputStream(uri, metadata);
+		return extractText(inputStream, metadata, null, options);
+	}
+
+	private static String extractText(TikaInputStream inputStream, Metadata metadata, String uri, Map<String, Object> options) throws Exception {
+		final AutoDetectParser parser = createParser();
 		final ParseContext context = new ParseContext();
 
 		String outputEncoding = null;
@@ -354,7 +376,7 @@ public class NodeTika {
 		final RichTextContentHandler contentHandler = new RichTextContentHandler(writer, maxLength);
 		final BodyContentHandler body = new BodyContentHandler(contentHandler);
 
-		final TikaInputStream inputStream = createInputStream(uri, metadata);
+		
 
 		// Set up recursive parsing of archives.
 		// See: http://wiki.apache.org/tika/RecursiveMetadata
