@@ -4,7 +4,8 @@
 'use strict';
 
 var assert = require('assert');
-var tika = require('../');
+var tika = require('../')
+var fs = require('fs');
 
 suite('document tests', function() {
 	test('detect txt content-type', function(done) {
@@ -196,6 +197,17 @@ suite('document tests', function() {
 			assert.deepEqual(meta.producer, ['LibreOffice 4.1']);
 			done();
 		});
+	});
+	
+	test('extract from pdf buffer', function(done) {
+    fs.readFile('test/data/file.pdf', function(err, buf) {
+      assert.ifError(err);
+      tika.text(buf, function(err, text) {
+        assert.ifError(err);
+        assert.equal(text.trim(), 'Just some text.');
+        done();
+      });
+    });
 	});
 });
 
